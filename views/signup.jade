@@ -1,0 +1,20 @@
+extends layout
+
+block header
+	.row
+		span.span4
+			h1 Hello to you mr #{user.display_name}
+	
+block content
+	.row
+		span.span8
+			.input-append
+				input#username.input-large(size="16", type="text", placeholder="#{user.username}")
+				span.add-on .vimeocase.com
+				button#signup.btn.btn-large Sign up!
+
+block footer
+	script
+		Scripts.signup()
+				
+

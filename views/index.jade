@@ -1,0 +1,15 @@
+extends layout
+
+block header
+	.row
+		span.span4
+			h1= title
+	
+block content
+	.row
+		span.span8
+			.btn-group
+				button.btn.btn-large.disabled
+					i.icon-wrench
+				a.btn.btn-large.btn-info(href="/vimeo") Connect to Vimeo!
+

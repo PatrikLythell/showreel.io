@@ -8,9 +8,19 @@ block header
   
 block content
   .row
-    .span8
+    .span12
       iframe(src="http://player.vimeo.com/video/#{video.id}", width="640", height="480", frameborder="0", webkitAllowFullScreen, mozallowfullscreen, allowFullScreen)
       p= video.description
+      - var id = video.id
+      - for video in user.videos
+        - var url = encodeURIComponent(video.title); url = url.replace(/%20/g, "_");
+        - if (id !== video.id)
+          a(href="/#{user.user_name}/#{url}")
+            img(src="#{video.thumbnails.thumbnail[1]._content}")
+            h4= video.title
+            - var date = video.upload_date; date = date.slice(0,4)
+            p= date
+
 block footer
   script 
     //REMOVE BECAUSE YOU'RE EXPOSING THE USER OBJECT!!!

@@ -8,11 +8,13 @@ block header
   
 block content
   .row
-    .span8
+    .span12
       - for video in user.videos
         - var url = encodeURIComponent(video.title); url = url.replace(/%20/g, "_")
         a(href="/#{user.user_name}/#{url}")
           img(src="#{video.thumbnails.thumbnail[1]._content}")
+          h4= video.title
+          p= video.upload_date
 
 block footer
   script 

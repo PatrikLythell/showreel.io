@@ -17,7 +17,7 @@
         }, 300);
       });
       checkName = function(username) {
-        return $.post('check-username', {
+        return $.post('/check-username', {
           "user_name": username
         }, function(res) {
           console.log(res);
@@ -53,12 +53,20 @@
           color = "light";
         }
         console.log(color);
-        return $.post('color-choice', {
+        return $.post('/color-choice', {
           "color": color
         }, function(res) {
           console.log(res);
-          return window.location = "/sync";
+          return window.location.href = "/sync";
         });
+      });
+    },
+    videoInfo: function(id, user) {
+      return $.post('/video-info', {
+        "video_id": id,
+        "user": user
+      }, function(res) {
+        return console.log(res);
       });
     }
   };

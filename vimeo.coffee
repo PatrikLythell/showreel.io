@@ -68,3 +68,13 @@ exports.app = (config) ->
 		, (err, res, body) ->
 			body = JSON.parse body
 			callback(body)
+
+	getVideoInfo: (params, videoid, callback) ->
+		params.consumer_key = appId
+		params.consumer_secret = appSecret
+		request.post
+			url: root+'&method=vimeo.videos.getInfo&video_id='+videoid
+			oauth: params
+		, (err, res, body) ->
+			body = JSON.parse body
+			callback(body.video[0])

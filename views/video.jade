@@ -9,16 +9,14 @@ block header
 block content
   .row
     .span8
-      - for video in user.videos
-        - var url = encodeURIComponent(video.title); url = url.replace(/%20/g, "_")
-        a(href="/#{user.user_name}/#{url}")
-          img(src="#{video.thumbnails.thumbnail[1]._content}")
-
+      iframe(src="http://player.vimeo.com/video/#{video.id}", width="640", height="480", frameborder="0", webkitAllowFullScreen, mozallowfullscreen, allowFullScreen)
+      p= video.description
 block footer
   script 
     //REMOVE BECAUSE YOU'RE EXPOSING THE USER OBJECT!!!
     var user = !{JSON.stringify(user)}
     console.log(user)
+
       
         
 

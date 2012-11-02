@@ -78,6 +78,17 @@
           body = JSON.parse(body);
           return callback(body);
         });
+      },
+      getVideoInfo: function(params, videoid, callback) {
+        params.consumer_key = appId;
+        params.consumer_secret = appSecret;
+        return request.post({
+          url: root + '&method=vimeo.videos.getInfo&video_id=' + videoid,
+          oauth: params
+        }, function(err, res, body) {
+          body = JSON.parse(body);
+          return callback(body.video[0]);
+        });
       }
     };
   };

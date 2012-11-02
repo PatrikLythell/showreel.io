@@ -15,7 +15,7 @@ window.Scripts =
 			, 300
 
 		checkName = (username) ->
-			$.post 'check-username',
+			$.post '/check-username',
 				"user_name": username
 			, (res) ->
 				console.log res
@@ -44,10 +44,17 @@ window.Scripts =
 			else
 				color = "light"
 			console.log color
-			$.post 'color-choice',
+			$.post '/color-choice',
 				"color": color
 			, (res) ->
 				console.log res
-				window.location = "/sync"
-		)	
+				window.location.href = "/sync"
+		)
+
+	videoInfo: (id, user) ->
+		$.post '/video-info',
+			"video_id": id
+			"user": user
+		, (res) ->
+			console.log res
 		

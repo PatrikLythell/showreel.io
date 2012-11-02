@@ -29,8 +29,20 @@
         req.session.token_secret = response.oauth_token_secret;
         params = req.session;
         return vimeoConnect.getUserInfo(req.session.token, function(response) {
+          var id;
           req.session.user = response.person;
-          return res.redirect('/sign-up');
+          id = {
+            "vimeo.id": response.person.id
+          };
+          return db.users.findOne(id, function(err, docs) {
+            if (docs === null) {
+              res.redirect('/sign-up');
+              return console.log("new user");
+            } else {
+              res.redirect('/' + docs.user_name);
+              return console.log("exising user");
+            }
+          });
         });
       });
     });
@@ -54,9 +66,13 @@
     });
     app.post('/new-user', function(req, res) {
       var user;
-      user = req.session.user;
+      user = {
+        vimeo: req.session.user
+      };
       user.user_name = req.body.user_name;
-      return db.users.save(user, function(err) {
+      user.token = req.session.token;
+      req.session.user_name = req.body.user_name;
+      return db.users.insert(user, function(err) {
         if (err) {
           throw err;
         }
@@ -68,7 +84,7 @@
       color = req.body.color;
       console.log(color);
       id = {
-        id: req.session.user.id
+        "vimeo.id": req.session.user.id
       };
       return db.users.update(id, {
         $set: {
@@ -84,33 +100,58 @@
         return res.send("ok");
       });
     });
+    app.post('/video-info', function(req, res) {
+      var user, videoID;
+      videoID = req.body.video_id;
+      user = req.body.user;
+      return db.users.findOne({
+        user_name: user
+      }, function(err, response) {
+        var token;
+        token = response.token;
+        return vimeoConnect.getVideoInfo(token, videoID, function(response) {
+          console.log(response.thumbnails);
+          return res.send(response);
+        });
+      });
+    });
     app.get('/sync', function(req, res) {
-      var getThumbnailUrls, thumbnails, token;
-      console.log(req.session.token);
+      var getVideoInfo, render, token, vidArr;
+      console.log(req.session);
+      render = function(videos, name) {
+        var id;
+        console.log("redirecting");
+        id = {
+          "vimeo.id": req.session.user.id
+        };
+        db.users.update(id, {
+          $set: {
+            videos: videos
+          }
+        }, true);
+        return res.redirect('/' + name);
+      };
       token = {
-        token: 'cf5c00fb4f410f44870c904ed069ab11',
-        token_secret: '7b3e445a49f2ed44edbe39ef549918fa243d69b0',
+        token: 'f4eb56c51595c348f178f7c30282047f',
+        token_secret: '79029bf362b130d6ba9e87cc3dad44da0d610c1c',
         consumer_key: 'b62d75bf5a4e0b0e5ae27acc9cae476e7000d0c5',
         consumer_secret: '9e14fd99e7852a313685ed9a057b0c4d2a2bf4f5'
       };
-      thumbnails = [];
-      vimeoConnect.getAllVideos(token, function(response) {
-        var i, video, _i, _len, _ref, _results;
-        _ref = response.videos.video;
-        _results = [];
-        for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
-          video = _ref[i];
-          _results.push(getThumbnailUrls(token, video.id));
-        }
-        return _results;
-      });
-      return getThumbnailUrls = function(token, id) {
-        return vimeoConnect.getThumbnailUrls(token, id, function(response) {
-          return thumbnails.push(response.thumbnails);
+      vidArr = [];
+      getVideoInfo = function(video, callback) {
+        return vimeoConnect.getVideoInfo(token, video.id, function(response) {
+          delete response.owner;
+          vidArr.push(response);
+          return callback();
         });
       };
+      return vimeoConnect.getAllVideos(token, function(response) {
+        return async.forEach(response.videos.video, getVideoInfo, function(err) {
+          return render(vidArr, req.session.user_name);
+        });
+      });
     });
-    return app.get('/:username', function(req, res) {
+    app.get('/:username', function(req, res) {
       var username;
       if (req.url === '/favicon.ico') {
         res.writeHead(200, {
@@ -119,13 +160,72 @@
         res.end();
         return console.log('favicon requested');
       } else {
-        username = req.url.substr(1);
+        username = req.params.username;
         return db.users.findOne({
           user_name: username
+        }, {
+          token: 0
         }, function(err, response) {
-          return res.render('user', {
-            user: response
-          });
+          console.log(response);
+          if (response === null) {
+            return res.render('404');
+          } else {
+            return res.render('user', {
+              user: response
+            });
+          }
+        });
+      }
+    });
+    return app.get('/:username/:video', function(req, res) {
+      var username, video, videoName;
+      if (req.url === '/favicon.ico') {
+        res.writeHead(200, {
+          'Content-Type': 'image/x-icon'
+        });
+        res.end();
+        return console.log('favicon requested');
+      } else {
+        username = req.params.username;
+        video = req.params.video;
+        videoName = video.replace(/_/g, "%20");
+        videoName = decodeURIComponent(videoName);
+        console.log(videoName);
+        return db.users.findOne({
+          user_name: username
+        }, {
+          token: 0
+        }, function(err, response) {
+          var findVideo, found, render;
+          if (response === null) {
+            console.log("user not found");
+            return res.render('404');
+          } else {
+            render = function(found) {
+              return res.render('video', {
+                user: response,
+                video: found
+              });
+            };
+            found = null;
+            videoName = videoName.toLowerCase();
+            findVideo = function(video, callback) {
+              var searchTerm;
+              searchTerm = video.title;
+              searchTerm = searchTerm.toLowerCase();
+              if (searchTerm === videoName) {
+                found = video;
+              }
+              return callback(found);
+            };
+            return async.forEach(response.videos, findVideo, function(err) {
+              if (found === null) {
+                return res.render('404');
+              } else {
+                return render(found);
+              }
+            });
+          }
         });
       }
     });

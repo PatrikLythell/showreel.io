@@ -196,7 +196,7 @@
         }, {
           token: 0
         }, function(err, response) {
-          var findVideo, found, render;
+          var c, findVideo, found, render;
           if (response === null) {
             console.log("user not found");
             return res.render('404');
@@ -209,17 +209,21 @@
             };
             found = null;
             videoName = videoName.toLowerCase();
+            c = 0;
             findVideo = function(video, callback) {
               var searchTerm;
               searchTerm = video.title;
               searchTerm = searchTerm.toLowerCase();
               if (searchTerm === videoName) {
                 found = video;
+                callback("err");
               }
-              return callback(found);
+              callback();
+              c++;
+              return console.log(c);
             };
             return async.forEach(response.videos, findVideo, function(err) {
-              if (found === null) {
+              if (!err) {
                 return res.render('404');
               } else {
                 return render(found);

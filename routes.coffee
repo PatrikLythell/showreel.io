@@ -155,16 +155,20 @@ module.exports = (app, vimeoConnect, async, db) ->
 
 					found = null
 					videoName = videoName.toLowerCase() # set lower case for check
+					c = 0
 
 					findVideo = (video, callback) ->
 						searchTerm = video.title
 						searchTerm = searchTerm.toLowerCase()
 						if searchTerm is videoName
 							found = video
-						callback(found)
+							callback("err") # callback with an error to break the loop on find
+						callback() # fallback callback if we don't find nuttin
+						c++
+						console.log c
 
 					async.forEach response.videos, findVideo, (err) ->
-						if found is null
+						if !err
 							res.render '404'
 						else 
 							render(found)
